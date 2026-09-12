@@ -362,9 +362,3 @@ The parser extracts **70+ technical skills** organized into categories:
     <img src="https://img.shields.io/badge/Live_Dashboard-Visit_Now-success?style=for-the-badge" alt="Live Dashboard">
   </a>
 </p>
-
-**Dashboard URL:** [https://junewayne.github.io/Job_Market_Stream/](https://junewayne.github.io/Job_Market_Stream/)
-
-<p align="center">
-  Made with love for data science job seekers
-</p>
