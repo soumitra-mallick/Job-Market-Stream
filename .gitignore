@@ -1,0 +1,4 @@
+.env
+job-env/
+data/jobs.duckdb
+data/parsed_jobs.csv

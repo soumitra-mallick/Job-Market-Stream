@@ -1,0 +1,109 @@
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - "512M"
+      - --reserve-memory
+      - "0M"
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - "PLAINTEXT://0.0.0.0:9092"
+      - --advertise-kafka-addr
+      - "PLAINTEXT://redpanda:9092"
+    ports:
+      - "9092:9092" # Kafka API
+      - "9644:9644" # Admin API (optional)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  console:
+    image: docker.redpanda.com/redpandadata/console:v3.1.0
+    container_name: redpanda-console
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]
+        redpanda:
+          adminApi:
+            enabled: true
+            urls: ["http://redpanda:9644"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    restart: unless-stopped
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      - KAFKA_SERVER=redpanda:9092
+      - KAFKA_TOPIC=job_postings
+      - ENABLE_GEOCODING=true
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os; exit(0 if os.path.exists('/app/data/parsed_jobs.csv') and (os.path.getmtime('/app/data/parsed_jobs.csv') > os.path.getmtime('/proc/1/stat') - 600) else 1)",
+        ]
+      interval: 300s # Check every 5 minutes
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    # uses default CMD ["python", "consumer.py"]
+
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: "host"
+    extra_hosts:
+      - "redpanda:127.0.0.1"
+    depends_on:
+      - redpanda
+    environment:
+      - KAFKA_SERVER=localhost:9092
+      - KAFKA_TOPIC=job_postings
+    command: ["python", "producer.py"]
+    restart: "unless-stopped"
+
+  supabase_ingestor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - consumer
+    command: ["python", "supabase_ingestion.py"]
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    environment:
+      - SUPABASE_INGEST_INTERVAL_SECONDS=120
+    env_file:
+      - .env
