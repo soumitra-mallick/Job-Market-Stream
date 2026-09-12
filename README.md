@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://junewayne.github.io/Job_Market_Stream/"><strong>View Live Dashboard</strong></a>
+  <a href="https://job-market-stream-fqjpq5ddq3te9hcxx9q365.streamlit.app"><strong>View Live Dashboard</strong></a>
 </p>
 
 ---
@@ -358,7 +358,7 @@ The parser extracts **70+ technical skills** organized into categories:
 ## Live Demo
 
 <p align="center">
-  <a href="https://junewayne.github.io/Job_Market_Stream/">
+  <a href="https://job-market-stream-fqjpq5ddq3te9hcxx9q365.streamlit.app">
     <img src="https://img.shields.io/badge/Live_Dashboard-Visit_Now-success?style=for-the-badge" alt="Live Dashboard">
   </a>
 </p>
